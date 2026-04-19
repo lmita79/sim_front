@@ -1,0 +1,59 @@
+.settlement-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.settlement-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-10) var(--sp-6);
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  text-align: center;
+}
+
+.settlement-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--surface-border-bright);
+}
+
+.settlement-btn--active {
+  background: color-mix(in srgb, var(--st-color) 12%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--st-color) 50%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--st-color) 15%, transparent);
+}
+
+.settlement-btn__icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  background: var(--surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: all var(--t-fast);
+}
+
+.settlement-btn--active .settlement-btn__icon-wrap {
+  background: color-mix(in srgb, var(--st-color) 20%, var(--surface-elevated));
+  color: var(--st-color);
+}
+
+.settlement-btn__label {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-tertiary);
+  line-height: var(--lh-snug);
+  transition: color var(--t-fast);
+}
+
+.settlement-btn--active .settlement-btn__label {
+  color: var(--text-primary);
+}

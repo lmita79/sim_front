@@ -1,0 +1,97 @@
+.map-container {
+  flex: 1;
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.place-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dot-color, #94a3b8);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  cursor: pointer;
+  transition: transform var(--t-fast);
+  box-shadow: 0 0 6px var(--dot-color, #94a3b8);
+}
+
+.place-dot:hover {
+  transform: scale(1.6);
+  box-shadow: 0 0 10px var(--dot-color, #94a3b8);
+  z-index: 10;
+}
+
+.analysis-pin {
+  width: 18px;
+  height: 18px;
+  background: var(--color-accent);
+  border: 2.5px solid rgba(255,255,255,0.9);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(20,184,166,0.6);
+  animation: pulse-pin 2s ease-in-out infinite;
+  cursor: pointer;
+}
+
+@keyframes pulse-pin {
+  0%   { box-shadow: 0 0 0 0 rgba(20,184,166,0.6); }
+  70%  { box-shadow: 0 0 0 12px rgba(20,184,166,0); }
+  100% { box-shadow: 0 0 0 0 rgba(20,184,166,0); }
+}
+
+.maplibregl-popup-content {
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--surface-border-bright) !important;
+  border-radius: var(--r-md) !important;
+  padding: var(--sp-8) var(--sp-10) !important;
+  box-shadow: var(--shadow-lg) !important;
+  color: var(--text-primary) !important;
+}
+
+.maplibregl-popup-tip { display: none !important; }
+
+.place-popup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.place-popup strong {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.place-popup span {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}
+
+.maplibregl-ctrl-group {
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--surface-border-bright) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: var(--shadow-md) !important;
+  overflow: hidden;
+}
+
+.maplibregl-ctrl-group button {
+  background: none !important;
+  border: none !important;
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background: var(--surface-hover) !important;
+}
+
+.maplibregl-ctrl-icon {
+  filter: invert(0.7) !important;
+}

@@ -1,0 +1,61 @@
+{
+  "title": "SIM",
+  "tagline": "Space in Motion",
+  "subtitle": "Urban Integration Mapper",
+  "searchPlaceholder": "Search places...",
+  "filters": "Place Filters",
+  "clearFilters": "Reset",
+  "analysisRadius": "Analysis Radius",
+  "bufferRings": "Buffer Rings",
+  "meters": "m",
+  "languageSelector": "Language",
+  "clickMapInstructions": "Click anywhere on the map to run a site analysis",
+  "layers": "Map Layers",
+  "settlementProfile": "Settlement Profile",
+  "score": {
+    "title": "Site Analysis",
+    "global": "Integration Score",
+    "outOf": "/ 100",
+    "good": "Strong integration potential",
+    "average": "Moderate capacity",
+    "poor": "Capacity gap",
+    "indicators": "indicators",
+    "hide": "Hide details",
+    "show": "Show details"
+  },
+  "variables": {
+    "accessibility":    "Accessibility",
+    "services":         "Essential Services",
+    "urbanIntegration": "Urban Integration",
+    "landUse":          "Land Use Compatibility",
+    "greenSpace":       "Green Space Access",
+    "housing":          "Housing & Service Density",
+    "education":        "Education, Work & Language"
+  },
+  "layerGroups": {
+    "transit":   "Transit & Roads",
+    "health":    "Health",
+    "services":  "Services",
+    "landuse":   "Land Use",
+    "education": "Education & Work",
+    "green":     "Green Spaces",
+    "other":     "Other"
+  },
+  "settlementTypes": {
+    "general":  "General",
+    "mothers":  "Mothers & Children",
+    "trauma":   "Trauma Survivors",
+    "singles":  "Single Adults"
+  },
+  "placeTypes": {
+    "amenity":          "Amenities",
+    "leisure":          "Leisure",
+    "public_transport": "Public Transport",
+    "shop":             "Commerce",
+    "railway":          "Railway",
+    "tourism":          "Tourism",
+    "urban_service":    "Urban Services",
+    "industrial":       "Industrial",
+    "vacant_lot":       "Vacant Lots"
+  }
+}

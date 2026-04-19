@@ -1,0 +1,99 @@
+.layer-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.layer-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-5) var(--sp-8);
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r-base);
+  cursor: pointer;
+  transition: background var(--t-fast), border-color var(--t-fast);
+  text-align: left;
+  width: 100%;
+}
+
+.layer-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--surface-border-bright);
+}
+
+.layer-btn--active {
+  background: var(--surface-card);
+  border-color: color-mix(in srgb, var(--layer-color) 30%, transparent);
+}
+
+.layer-btn__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-full);
+  background: var(--layer-color);
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity var(--t-fast);
+}
+
+.layer-btn--active .layer-btn__dot {
+  opacity: 1;
+  box-shadow: 0 0 6px var(--layer-color);
+}
+
+.layer-btn__icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color var(--t-fast);
+}
+
+.layer-btn--active .layer-btn__icon {
+  color: var(--layer-color);
+}
+
+.layer-btn__label {
+  flex: 1;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  transition: color var(--t-fast);
+}
+
+.layer-btn--active .layer-btn__label {
+  color: var(--text-primary);
+}
+
+.layer-btn__toggle {
+  width: 28px;
+  height: 16px;
+  border-radius: var(--r-full);
+  background: var(--surface-elevated);
+  border: 1px solid var(--surface-border-bright);
+  position: relative;
+  flex-shrink: 0;
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+
+.layer-btn__toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--text-tertiary);
+  transition: transform var(--t-fast), background var(--t-fast);
+}
+
+.layer-btn__toggle--on {
+  background: color-mix(in srgb, var(--layer-color) 25%, var(--surface-elevated));
+  border-color: var(--layer-color);
+}
+
+.layer-btn__toggle--on::after {
+  transform: translateX(12px);
+  background: var(--layer-color);
+}

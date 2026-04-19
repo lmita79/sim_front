@@ -1,0 +1,61 @@
+{
+  "title": "SIM",
+  "tagline": "Space in Motion",
+  "subtitle": "Mapeador de Integración Urbana",
+  "searchPlaceholder": "Buscar lugares...",
+  "filters": "Filtros de lugares",
+  "clearFilters": "Resetear",
+  "analysisRadius": "Radio de análisis",
+  "bufferRings": "Anillos de buffer",
+  "meters": "m",
+  "languageSelector": "Idioma",
+  "clickMapInstructions": "Haz clic en el mapa para analizar un sitio",
+  "layers": "Capas del mapa",
+  "settlementProfile": "Perfil de asentamiento",
+  "score": {
+    "title": "Análisis de sitio",
+    "global": "Puntaje de integración",
+    "outOf": "/ 100",
+    "good": "Alto potencial de integración",
+    "average": "Capacidad moderada",
+    "poor": "Brecha de capacidad",
+    "indicators": "indicadores",
+    "hide": "Ocultar detalle",
+    "show": "Ver detalle"
+  },
+  "variables": {
+    "accessibility":    "Accesibilidad",
+    "services":         "Servicios Esenciales",
+    "urbanIntegration": "Integración Urbana",
+    "landUse":          "Compatibilidad de Uso de Suelo",
+    "greenSpace":       "Espacios Verdes",
+    "housing":          "Densidad de Vivienda y Servicios",
+    "education":        "Educación, Trabajo e Idioma"
+  },
+  "layerGroups": {
+    "transit":   "Tránsito y vías",
+    "health":    "Salud",
+    "services":  "Servicios",
+    "landuse":   "Uso de suelo",
+    "education": "Educación y trabajo",
+    "green":     "Espacios verdes",
+    "other":     "Otros"
+  },
+  "settlementTypes": {
+    "general":  "General",
+    "mothers":  "Madres con hijos",
+    "trauma":   "Sobrevivientes de trauma",
+    "singles":  "Adultos solos"
+  },
+  "placeTypes": {
+    "amenity":          "Amenidades",
+    "leisure":          "Ocio",
+    "public_transport": "Transporte público",
+    "shop":             "Comercio",
+    "railway":          "Ferrocarril",
+    "tourism":          "Turismo",
+    "urban_service":    "Servicios urbanos",
+    "industrial":       "Industrial",
+    "vacant_lot":       "Lotes baldíos"
+  }
+}

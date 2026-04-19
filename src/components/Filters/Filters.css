@@ -1,0 +1,133 @@
+.filters { }
+
+.filters__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-8);
+}
+
+.filters__count {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.filters__reset {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  transition: background var(--t-fast);
+}
+
+.filters__reset:hover { background: var(--color-primary-dim); }
+
+.filters__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.fcat {
+  border-radius: var(--r-base);
+  overflow: hidden;
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+}
+
+.fcat__row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-4) var(--sp-6);
+}
+
+.fcat__expand {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--sp-2);
+  display: flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+  transition: color var(--t-fast);
+  flex-shrink: 0;
+}
+
+.fcat__expand:hover { color: var(--text-secondary); }
+
+.fcat__label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  flex: 1;
+  cursor: pointer;
+}
+
+.fcat__cb {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fcat__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+}
+
+.fcat__name {
+  flex: 1;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+}
+
+.fcat__num {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  font-family: var(--font-family-mono);
+}
+
+.fcat__subs {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-2) var(--sp-8) var(--sp-6) 2.5rem;
+  gap: var(--sp-1);
+  background: var(--surface-bg);
+  border-top: 1px solid var(--surface-border);
+}
+
+.fsub__label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-3) var(--sp-4);
+  cursor: pointer;
+  border-radius: var(--r-sm);
+  transition: background var(--t-fast);
+}
+
+.fsub__label:hover { background: var(--surface-card); }
+
+.fsub__cb {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fsub__name {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  text-transform: capitalize;
+}

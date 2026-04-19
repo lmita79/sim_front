@@ -1,0 +1,62 @@
+.buffer-rings { }
+
+.buffer-rings__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin: 0 0 var(--sp-8) 0;
+}
+
+.buffer-rings__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+.ring-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  padding: var(--sp-8) var(--sp-10);
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--r-base);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.ring-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--surface-border-bright);
+}
+
+.ring-btn--on {
+  background: color-mix(in srgb, var(--ring-color) 12%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--ring-color) 50%, transparent);
+}
+
+.ring-btn__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--r-full);
+  background: var(--ring-color);
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: opacity var(--t-fast), box-shadow var(--t-fast);
+}
+
+.ring-btn--on .ring-btn__dot {
+  opacity: 1;
+  box-shadow: 0 0 8px var(--ring-color);
+}
+
+.ring-btn__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  font-family: var(--font-family-mono);
+  transition: color var(--t-fast);
+}
+
+.ring-btn--on .ring-btn__label {
+  color: var(--text-primary);
+}
