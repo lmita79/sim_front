@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useApp } from '../../context/AppContext';
-import { fetchGlobalScore } from '../../services/api';
+import { fetchGlobalScore, fetchPlacesDynamic } from '../../services/api';
 import { ScorePanel } from '../ScorePanel/ScorePanel';
 import type { LayerGroup } from '../../types';
 import './Map.css';
@@ -20,6 +20,30 @@ const GROUP_COLORS: Record<LayerGroup, string> = {
   green: '#4ade80',
   other: '#94a3b8',
 };
+
+// 🔥 MAPEO DINÁMICO
+function mapToGroup(p: any): LayerGroup {
+
+  if (p.place_type === 'public_transport' || p.place_type === 'railway') {
+    return 'transit';
+  }
+
+  if (p.place_type === 'amenity') {
+    if (['hospital', 'clinic', 'pharmacy'].includes(p.tag_value)) return 'health';
+    if (['school', 'university'].includes(p.tag_value)) return 'education';
+    return 'services';
+  }
+
+  if (p.place_type === 'shop') return 'services';
+
+  if (p.place_type === 'landuse') return 'landuse';
+
+  if (p.place_type === 'leisure' || p.place_type === 'natural') return 'green';
+
+  if (p.place_type === 'highway') return 'transit';
+
+  return 'other';
+}
 
 function makeCircle(lng: number, lat: number, radiusMeters: number, points = 64) {
   const coords: [number, number][] = [];
@@ -47,17 +71,16 @@ export function Map() {
   const analysisLngLatRef = useRef<[number, number] | null>(null);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showPanel, setShowPanel] = useState(false);
 
   const {
-    filteredPlaces,
     bufferRings,
     settlementType,
     setAnalysisPoint,
     setScoreData,
     setIsLoadingScore,
+    setPlaces
   } = useApp();
-
-  const [showPanel, setShowPanel] = useState(false);
 
   // ================= MAP INIT =================
   useEffect(() => {
@@ -72,7 +95,6 @@ export function Map() {
             type: 'raster',
             tiles: ['https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'],
             tileSize: 256,
-            attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
           },
         },
         layers: [{ id: 'carto-layer', type: 'raster', source: 'carto' }],
@@ -83,7 +105,47 @@ export function Map() {
 
     m.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-    // click mapa (análisis)
+    // 🔥 CARGA DINÁMICA (REEMPLAZA filteredPlaces)
+    m.on('load', () => {
+
+      const loadPlaces = async () => {
+
+        if (!m.getStyle()) return;
+
+        const bounds = m.getBounds();
+
+        const bbox: [[number, number], [number, number]] = [
+          [bounds.getSouth(), bounds.getWest()],
+          [bounds.getNorth(), bounds.getEast()]
+        ];
+
+        try {
+          const data = await fetchPlacesDynamic(bbox);
+
+          console.log("PLACES:", data); // 🔥 DEBUG
+
+          const enriched = data.map(p => ({
+            ...p,
+            layer_group: mapToGroup(p)
+          }));
+
+          setPlaces(enriched);
+          updateMapPoints(m, enriched);
+
+        } catch (err) {
+          console.error('Error loading places:', err);
+        }
+      };
+
+      // 🔥 PRIMERA CARGA (ESTO TE FALTABA)
+      loadPlaces();
+
+      // 🔥 MOVIMIENTO
+      m.on('moveend', loadPlaces);
+
+    });
+
+    // ================= CLICK MAPA =================
     m.on('click', async e => {
       const { lng, lat } = e.lngLat;
       analysisLngLatRef.current = [lng, lat];
@@ -121,151 +183,10 @@ export function Map() {
     };
   }, []);
 
-  // ================= PLACES (LAYER PRO) =================
+  // ================= SELECCIÓN =================
   useEffect(() => {
     const m = mapRef.current;
-    if (!m) return;
-
-    const loadPlaces = () => {
-      const OFFSET_LAT = 50.7753 - 49.1244;
-      const OFFSET_LNG = 6.0839 - 8.4063;
-      const data: FeatureCollection<Point> = {
-        type: 'FeatureCollection',
-        features: filteredPlaces.map(p => ({
-          type: 'Feature',
-          geometry: {
-            type: 'Point',
-            // coordinates: [p.longitude, p.latitude],
-
-            coordinates: [
-              p.longitude + OFFSET_LNG,
-              p.latitude + OFFSET_LAT
-            ],
-          },
-          properties: {
-            id: p.id,
-            group: p.layer_group,
-          },
-        })),
-      };
-
-      if (m.getSource('places')) {
-        (m.getSource('places') as any).setData(data);
-        return;
-      }
-
-      m.addSource('places', {
-        type: 'geojson',
-        data,
-      });
-
-      // 🔥 GLOW (NEON)
-      m.addLayer({
-        id: 'places-glow',
-        type: 'circle',
-        source: 'places',
-        paint: {
-          'circle-radius': 12,
-          'circle-color': [
-            'match',
-            ['get', 'group'],
-            ...Object.entries(GROUP_COLORS).flat(),
-            '#94a3b8',
-          ],
-          'circle-opacity': 0.2,
-          'circle-blur': 0.8,
-        },
-      } as any);
-
-      // 🔥 BORDE BLANCO
-      m.addLayer({
-        id: 'places-border',
-        type: 'circle',
-        source: 'places',
-        paint: {
-          'circle-radius': 7,
-          'circle-color': '#ffffff',
-        },
-      });
-
-      // 🔥 PUNTO PRINCIPAL
-      m.addLayer({
-        id: 'places-layer',
-        type: 'circle',
-        source: 'places',
-        paint: {
-          'circle-radius': 4.5,
-          'circle-color': [
-            'match',
-            ['get', 'group'],
-            ...Object.entries(GROUP_COLORS).flat(),
-            '#94a3b8',
-          ],
-        },
-      } as any);
-
-      // 🔥 SELECCIÓN (halo blanco)
-      m.addLayer({
-        id: 'places-selected-outer',
-        type: 'circle',
-        source: 'places',
-        filter: ['==', ['get', 'id'], ''],
-        paint: {
-          'circle-radius': 14,
-          'circle-color': '#ffffff',
-          'circle-opacity': 0.9,
-        },
-      });
-
-      // 🔥 SELECCIÓN (color interno)
-      m.addLayer({
-        id: 'places-selected-inner',
-        type: 'circle',
-        source: 'places',
-        filter: ['==', ['get', 'id'], ''],
-        paint: {
-          'circle-radius': 7,
-          'circle-color': [
-            'match',
-            ['get', 'group'],
-            ...Object.entries(GROUP_COLORS).flat(),
-            '#94a3b8',
-          ],
-        },
-      } as any);
-
-      // CLICK
-      m.on('click', 'places-layer', (e) => {
-        const feature = e.features?.[0];
-        if (!feature) return;
-
-        const id = feature.properties?.id;
-        setSelectedId(id);
-      });
-
-      // CURSOR
-      m.on('mouseenter', 'places-layer', () => {
-        m.getCanvas().style.cursor = 'pointer';
-      });
-
-      m.on('mouseleave', 'places-layer', () => {
-        m.getCanvas().style.cursor = '';
-      });
-    };
-
-    if (!m.isStyleLoaded()) {
-      m.once('load', loadPlaces);
-    } else {
-      loadPlaces();
-    }
-
-  }, [filteredPlaces]);
-
-  useEffect(() => {
-    const m = mapRef.current;
-    if (!m) return;
-
-    if (!selectedId) return;
+    if (!m || !selectedId) return;
 
     if (!m.getLayer('places-selected-inner')) return;
 
@@ -315,34 +236,119 @@ export function Map() {
     });
   };
 
-  useEffect(() => {
-    const m = mapRef.current;
-    if (!m || !analysisLngLatRef.current) return;
-
-    updateBufferCircles(
-      m,
-      analysisLngLatRef.current[0],
-      analysisLngLatRef.current[1]
-    );
-
-  }, [bufferRings]);
-
-  const handleClose = () => {
-    setShowPanel(false);
-    setScoreData(null);
-    setAnalysisPoint(null);
-    analysisLngLatRef.current = null;
-
-    if (analysisMarkerRef.current) {
-      analysisMarkerRef.current.remove();
-      analysisMarkerRef.current = null;
-    }
-  };
-
   return (
     <div className="map-container">
       <div ref={mapContainer} className="map" />
-      {showPanel && <ScorePanel onClose={handleClose} />}
+      {showPanel && <ScorePanel onClose={() => setShowPanel(false)} />}
     </div>
   );
+}
+
+
+// ================= LAYERS COMPLETOS =================
+function updateMapPoints(m: maplibregl.Map, places: any[]) {
+
+  const data: FeatureCollection<Point> = {
+    type: 'FeatureCollection',
+    features: places.map(p => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [p.longitude, p.latitude],
+      },
+      properties: {
+        id: p.id,
+        group: mapToGroup(p),
+      },
+    })),
+  };
+
+  if (m.getSource('places')) {
+    (m.getSource('places') as any).setData(data);
+    return;
+  }
+
+  m.addSource('places', {
+    type: 'geojson',
+    data,
+  });
+
+  // 🔥 GLOW
+  m.addLayer({
+    id: 'places-glow',
+    type: 'circle',
+    source: 'places',
+    paint: {
+      'circle-radius': 12,
+      'circle-color': [
+        'match',
+        ['get', 'group'],
+        ...Object.entries(GROUP_COLORS).flat(),
+        '#94a3b8',
+      ] as any,
+      'circle-opacity': 0.2,
+      'circle-blur': 0.8,
+    },
+  });
+
+  // 🔥 BORDE
+  m.addLayer({
+    id: 'places-border',
+    type: 'circle',
+    source: 'places',
+    paint: {
+      'circle-radius': 7,
+      'circle-color': '#ffffff',
+    },
+  });
+
+  // 🔥 PUNTO
+  m.addLayer({
+    id: 'places-layer',
+    type: 'circle',
+    source: 'places',
+    paint: {
+      'circle-radius': 4.5,
+      'circle-color': [
+        'match',
+        ['get', 'group'],
+        ...Object.entries(GROUP_COLORS).flat(),
+        '#94a3b8',
+      ] as any,
+    },
+  });
+
+  // 🔥 SELECCIÓN
+  m.addLayer({
+    id: 'places-selected-outer',
+    type: 'circle',
+    source: 'places',
+    filter: ['==', ['get', 'id'], ''],
+    paint: {
+      'circle-radius': 14,
+      'circle-color': '#ffffff',
+      'circle-opacity': 0.9,
+    },
+  });
+
+  m.addLayer({
+    id: 'places-selected-inner',
+    type: 'circle',
+    source: 'places',
+    filter: ['==', ['get', 'id'], ''],
+    paint: {
+      'circle-radius': 7,
+      'circle-color': [
+        'match',
+        ['get', 'group'],
+        ...Object.entries(GROUP_COLORS).flat(),
+        '#94a3b8',
+      ] as any,
+    },
+  });
+
+  m.on('click', 'places-layer', (e) => {
+    const id = e.features?.[0]?.properties?.id;
+    if (id) console.log('Selected:', id);
+  });
 }

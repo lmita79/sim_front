@@ -290,13 +290,19 @@
   padding: var(--sp-8) var(--sp-10);
   display: flex;
   flex-direction: column;
-  gap: var(--sp-8);
+  gap: var(--sp-10);
   background: var(--surface-bg);
 }
-
+ 
+/* Indicador: dos líneas — texto arriba, barra abajo */
 .indicator {
-  display: grid;
-  grid-template-columns: 2rem 1fr 4.5rem 4.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.indicator__top {
+  display: flex;
   align-items: center;
   gap: var(--sp-4);
 }
@@ -306,11 +312,14 @@
   color: var(--text-muted);
   font-family: var(--font-family-mono);
   font-weight: var(--fw-semibold);
+  flex-shrink: 0;
+  min-width: 1.8rem;
 }
 
 .indicator__label {
   font-size: var(--fs-xs);
   color: var(--text-secondary);
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -321,6 +330,10 @@
   color: var(--text-accent);
   font-family: var(--font-family-mono);
   white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: right;
 }
 
@@ -329,6 +342,7 @@
   background: var(--surface-elevated);
   border-radius: var(--r-full);
   overflow: hidden;
+  /* sin margin-left — ocupa todo el ancho */
 }
 
 .indicator__bar {
@@ -341,6 +355,8 @@
 .indicator__score {
   font-size: var(--fs-xs);
   color: var(--text-tertiary);
-  text-align: right;
   font-family: var(--font-family-mono);
+  flex-shrink: 0;
+  min-width: 1.75rem;
+  text-align: right;
 }

@@ -37,111 +37,117 @@ export interface FilterState {
 }
 
 export interface LayerVisibility {
-  transit:   boolean;
-  health:    boolean;
-  services:  boolean;
-  landuse:   boolean;
+  transit: boolean;
+  health: boolean;
+  services: boolean;
+  landuse: boolean;
   education: boolean;
-  green:     boolean;
-  other:     boolean;
+  green: boolean;
+  other: boolean;
 }
 
 export interface BufferRing {
-  radius:  number;
+  radius: number;
   enabled: boolean;
-  color:   string;
+  color: string;
   opacity: number;
 }
 
 export interface IndicatorResult {
-  id:       string;
-  label:    string;
-  value:    number;
-  rawValue: string;
-  score:    number;
+  id: string;
+  label: string;
+  value: number;      // 0-100 para la barra
+  rawValue: string;   // ej: "747m", "5 paradas", "Presente"
+  score: number;      // score ponderado dentro de la variable
 }
 
 export interface VariableResult {
-  id:             string;
-  label:          string;
-  weight:         number;
-  score:          number;
-  maxScore:       number;
-  indicators:     IndicatorResult[];
-  classification: string;
+  id: string;
+  label: string;
+  weight: number;
+  score: number;
+  maxScore: number;
+  avg_pct?: number;
+  classification: 'strong' | 'moderate' | 'gap';
+  classificationLabel?: string;   // ej: "Red de transporte restringida"
+  indicators: IndicatorResult[];
 }
 
 export interface ScoreData {
+  ok?: boolean;
   global_score: number;
-  variables:    VariableResult[];
+  variables: VariableResult[];
+  dimensions?: Record<string, number>;
+  metrics?: Record<string, number | null>;
 }
 
+
 export interface AnalysisPoint {
-  latitude:  number;
+  latitude: number;
   longitude: number;
-  radius:    number;
+  radius: number;
 }
 
 export type Language = 'en' | 'es';
 
 export interface Translations {
-  title:    string;
-  tagline:  string;
+  title: string;
+  tagline: string;
   subtitle: string;
   searchPlaceholder: string;
-  filters:     string;
+  filters: string;
   clearFilters: string;
   analysisRadius: string;
-  bufferRings:    string;
-  meters:         string;
+  bufferRings: string;
+  meters: string;
   languageSelector: string;
   clickMapInstructions: string;
   layers: string;
   settlementProfile: string;
   score: {
-    title:    string;
-    global:   string;
-    outOf:    string;
-    good:     string;
-    average:  string;
-    poor:     string;
+    title: string;
+    global: string;
+    outOf: string;
+    good: string;
+    average: string;
+    poor: string;
     indicators: string;
-    hide:       string;
-    show:       string;
+    hide: string;
+    show: string;
   };
   variables: {
-    accessibility:    string;
-    services:         string;
+    accessibility: string;
+    services: string;
     urbanIntegration: string;
-    landUse:          string;
-    greenSpace:       string;
-    housing:          string;
-    education:        string;
+    landUse: string;
+    greenSpace: string;
+    housing: string;
+    education: string;
   };
   layerGroups: {
-    transit:   string;
-    health:    string;
-    services:  string;
-    landuse:   string;
+    transit: string;
+    health: string;
+    services: string;
+    landuse: string;
     education: string;
-    green:     string;
-    other:     string;
+    green: string;
+    other: string;
   };
   settlementTypes: {
-    general:  string;
-    mothers:  string;
-    trauma:   string;
-    singles:  string;
+    general: string;
+    mothers: string;
+    trauma: string;
+    singles: string;
   };
   placeTypes: {
-    amenity:           string;
-    leisure:           string;
-    public_transport:  string;
-    shop:              string;
-    railway:           string;
-    tourism:           string;
-    urban_service:     string;
-    industrial:        string;
-    vacant_lot:        string;
+    amenity: string;
+    leisure: string;
+    public_transport: string;
+    shop: string;
+    railway: string;
+    tourism: string;
+    urban_service: string;
+    industrial: string;
+    vacant_lot: string;
   };
 }

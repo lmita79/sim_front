@@ -14,6 +14,7 @@ interface AppContextType {
   analysisPoint: AnalysisPoint | null;
   scoreData: ScoreData | null;
   isLoadingScore: boolean;
+  setPlaces: (places: Place[]) => void;
   setFilters: (filters: FilterState) => void;
   setRadius: (radius: number) => void;
   setAnalysisPoint: (point: AnalysisPoint | null) => void;
@@ -41,12 +42,17 @@ const initializeFilters = (): FilterState => {
 };
 
 const initLayers = (): LayerVisibility => ({
-  transit: true, health: true, services: true, landuse: true,
-  education: true, green: true, other: true,
+  transit: true,
+  health: true,
+  services: true,
+  landuse: true,
+  education: true,
+  green: true,
+  other: true, // 👈 ASEGÚRATE
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [places] = useState<Place[]>(mockPlaces);
+  const [places, setPlaces] = useState<Place[]>([]);
   const [filters, setFilters] = useState<FilterState>(initializeFilters());
   const [layerVisibility, setLayerVisibilityState] = useState<LayerVisibility>(initLayers());
   const [bufferRings, setBufferRings] = useState<BufferRing[]>(defaultBufferRings);
@@ -109,7 +115,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       settlementType, searchQuery, radius, analysisPoint, scoreData, isLoadingScore,
       setFilters, setRadius, setAnalysisPoint, setScoreData, setIsLoadingScore,
       clearFilters, toggleFilter, setLayerVisibility, toggleBufferRing,
-      setSettlementType, setSearchQuery,
+      setSettlementType, setSearchQuery, setPlaces,
     }}>
       {children}
     </AppContext.Provider>
