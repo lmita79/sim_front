@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import type { Place, FilterState, ScoreData, AnalysisPoint, LayerVisibility, BufferRing, SettlementType } from '../types';
-import { mockPlaces, filterCategories, defaultBufferRings } from '../data/mockPlaces';
+import { filterCategories, defaultBufferRings } from '../data/mockPlaces';
 
 interface AppContextType {
   places: Place[];
@@ -35,43 +35,61 @@ const initializeFilters = (): FilterState => {
   filterCategories.forEach(category => {
     initialFilters[category.id] = {
       enabled: true,
-      subcategories: new Set(category.subcategories)
+      subcategories: new Set(category.subcategories),
     };
   });
   return initialFilters;
 };
 
 const initLayers = (): LayerVisibility => ({
-  transit: true,
-  health: true,
-  services: true,
-  landuse: true,
+  transit:   true,
+  health:    true,
+  services:  true,
+  landuse:   true,
   education: true,
-  green: true,
-  other: true, // 👈 ASEGÚRATE
+  green:     true,
+  other:     true,
 });
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [filters, setFilters] = useState<FilterState>(initializeFilters());
+  const [places, setPlaces]                     = useState<Place[]>([]);
+  const [filters, setFilters]                   = useState<FilterState>(initializeFilters());
   const [layerVisibility, setLayerVisibilityState] = useState<LayerVisibility>(initLayers());
-  const [bufferRings, setBufferRings] = useState<BufferRing[]>(defaultBufferRings);
-  const [settlementType, setSettlementType] = useState<SettlementType>('general');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [radius, setRadius] = useState<number>(1000);
-  const [analysisPoint, setAnalysisPoint] = useState<AnalysisPoint | null>(null);
-  const [scoreData, setScoreData] = useState<ScoreData | null>(null);
-  const [isLoadingScore, setIsLoadingScore] = useState(false);
+  const [bufferRings, setBufferRings]           = useState<BufferRing[]>(defaultBufferRings);
+  const [settlementType, setSettlementType]     = useState<SettlementType>('general');
+  const [searchQuery, setSearchQuery]           = useState('');
+  const [radius, setRadius]                     = useState<number>(1000);
+  const [analysisPoint, setAnalysisPoint]       = useState<AnalysisPoint | null>(null);
+  const [scoreData, setScoreData]               = useState<ScoreData | null>(null);
+  const [isLoadingScore, setIsLoadingScore]     = useState(false);
 
   const filteredPlaces = places.filter(place => {
-    if (!layerVisibility[place.layer_group]) return false;
+    // 1. Filtro por capa (layer_group) — si la capa está apagada, ocultar
+    if (place.layer_group && !layerVisibility[place.layer_group as keyof LayerVisibility]) {
+      return false;
+    }
+
+    // 2. Filtro por categoría/subcategoría
+    //    Si la categoría no existe en filterCategories, mostrar por defecto
+    //    (POIs de OSM como highway, building, office no están en el panel de filtros)
     const categoryFilter = filters[place.place_type];
-    if (!categoryFilter || !categoryFilter.enabled) return false;
-    if (!categoryFilter.subcategories.has(place.tag_value)) return false;
+    if (categoryFilter) {
+      if (!categoryFilter.enabled) return false;
+      if (categoryFilter.subcategories.size > 0 && !categoryFilter.subcategories.has(place.tag_value)) {
+        return false;
+      }
+    }
+    // Si no hay definición de filtro para ese place_type → mostrar siempre
+
+    // 3. Filtro por búsqueda
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return place.name.toLowerCase().includes(q) || place.tag_value.toLowerCase().includes(q);
+      return (
+        place.name.toLowerCase().includes(q) ||
+        place.tag_value.toLowerCase().includes(q)
+      );
     }
+
     return true;
   });
 
@@ -94,7 +112,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const allEnabled = !category.enabled;
         newFilters[categoryId] = {
           enabled: allEnabled,
-          subcategories: allEnabled ? new Set(catData.subcategories) : new Set()
+          subcategories: allEnabled ? new Set(catData.subcategories) : new Set(),
         };
       }
       return newFilters;
@@ -106,7 +124,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleBufferRing = (radius: number) => {
-    setBufferRings(prev => prev.map(r => r.radius === radius ? { ...r, enabled: !r.enabled } : r));
+    setBufferRings(prev =>
+      prev.map(r => r.radius === radius ? { ...r, enabled: !r.enabled } : r)
+    );
   };
 
   return (

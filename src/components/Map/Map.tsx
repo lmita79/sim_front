@@ -21,27 +21,18 @@ const GROUP_COLORS: Record<LayerGroup, string> = {
   other: '#94a3b8',
 };
 
-// 🔥 MAPEO DINÁMICO
 function mapToGroup(p: any): LayerGroup {
-
-  if (p.place_type === 'public_transport' || p.place_type === 'railway') {
-    return 'transit';
-  }
-
+  if (p.place_type === 'public_transport' || p.place_type === 'railway') return 'transit';
+  if (p.place_type === 'highway') return 'transit';
   if (p.place_type === 'amenity') {
-    if (['hospital', 'clinic', 'pharmacy'].includes(p.tag_value)) return 'health';
-    if (['school', 'university'].includes(p.tag_value)) return 'education';
+    if (['hospital', 'clinic', 'pharmacy', 'doctors', 'dentist'].includes(p.tag_value)) return 'health';
+    if (['school', 'university', 'college', 'kindergarten', 'library'].includes(p.tag_value)) return 'education';
     return 'services';
   }
-
   if (p.place_type === 'shop') return 'services';
-
-  if (p.place_type === 'landuse') return 'landuse';
-
+  if (p.place_type === 'office') return 'education';
+  if (p.place_type === 'landuse' || p.place_type === 'building') return 'landuse';
   if (p.place_type === 'leisure' || p.place_type === 'natural') return 'green';
-
-  if (p.place_type === 'highway') return 'transit';
-
   return 'other';
 }
 
@@ -49,14 +40,11 @@ function makeCircle(lng: number, lat: number, radiusMeters: number, points = 64)
   const coords: [number, number][] = [];
   const distX = radiusMeters / (111320 * Math.cos((lat * Math.PI) / 180));
   const distY = radiusMeters / 110540;
-
   for (let i = 0; i < points; i++) {
     const a = (i / points) * 2 * Math.PI;
     coords.push([lng + distX * Math.cos(a), lat + distY * Math.sin(a)]);
   }
-
   coords.push(coords[0]);
-
   return {
     type: 'Feature' as const,
     geometry: { type: 'Polygon' as const, coordinates: [coords] },
@@ -70,19 +58,21 @@ export function Map() {
   const analysisMarkerRef = useRef<maplibregl.Marker | null>(null);
   const analysisLngLatRef = useRef<[number, number] | null>(null);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showPanel, setShowPanel] = useState(false);
 
   const {
+    places,
+    filteredPlaces,
+    layerVisibility,
     bufferRings,
     settlementType,
     setAnalysisPoint,
     setScoreData,
     setIsLoadingScore,
-    setPlaces
+    setPlaces,
   } = useApp();
 
-  // ================= MAP INIT =================
+  // ─── MAP INIT ────────────────────────────────────────────
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
 
@@ -105,56 +95,35 @@ export function Map() {
 
     m.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-    // 🔥 CARGA DINÁMICA (REEMPLAZA filteredPlaces)
     m.on('load', () => {
-
       const loadPlaces = async () => {
-
         if (!m.getStyle()) return;
-
         const bounds = m.getBounds();
-
         const bbox: [[number, number], [number, number]] = [
           [bounds.getSouth(), bounds.getWest()],
-          [bounds.getNorth(), bounds.getEast()]
+          [bounds.getNorth(), bounds.getEast()],
         ];
-
         try {
           const data = await fetchPlacesDynamic(bbox);
-
-          console.log("PLACES:", data); // 🔥 DEBUG
-
-          const enriched = data.map(p => ({
-            ...p,
-            layer_group: mapToGroup(p)
-          }));
-
+          const enriched = data.map(p => ({ ...p, layer_group: mapToGroup(p) }));
           setPlaces(enriched);
-          updateMapPoints(m, enriched);
-
         } catch (err) {
           console.error('Error loading places:', err);
         }
       };
 
-      // 🔥 PRIMERA CARGA (ESTO TE FALTABA)
       loadPlaces();
-
-      // 🔥 MOVIMIENTO
       m.on('moveend', loadPlaces);
-
     });
 
-    // ================= CLICK MAPA =================
+    // CLICK → análisis
     m.on('click', async e => {
       const { lng, lat } = e.lngLat;
       analysisLngLatRef.current = [lng, lat];
 
-      if (analysisMarkerRef.current) analysisMarkerRef.current.remove();
-
+      analysisMarkerRef.current?.remove();
       const el = document.createElement('div');
       el.className = 'analysis-pin';
-
       analysisMarkerRef.current = new maplibregl.Marker({ element: el })
         .setLngLat([lng, lat])
         .addTo(m);
@@ -162,7 +131,6 @@ export function Map() {
       setAnalysisPoint({ latitude: lat, longitude: lng, radius: 1000 });
       setIsLoadingScore(true);
       setShowPanel(true);
-
       updateBufferCircles(m, lng, lat);
 
       try {
@@ -176,65 +144,38 @@ export function Map() {
     });
 
     mapRef.current = m;
-
-    return () => {
-      m.remove();
-      mapRef.current = null;
-    };
+    return () => { m.remove(); mapRef.current = null; };
   }, []);
 
-  // ================= SELECCIÓN =================
+  // ─── ACTUALIZAR MAPA cuando filteredPlaces cambia ────────
+  // filteredPlaces ya tiene aplicados layerVisibility + filters del contexto
   useEffect(() => {
     const m = mapRef.current;
-    if (!m || !selectedId) return;
+    if (!m || !m.isStyleLoaded()) return;
+    renderPlaces(m, filteredPlaces);
+  }, [filteredPlaces]);
 
-    if (!m.getLayer('places-selected-inner')) return;
-
-    m.setFilter('places-selected-inner', ['==', ['get', 'id'], selectedId]);
-    m.setFilter('places-selected-outer', ['==', ['get', 'id'], selectedId]);
-
-  }, [selectedId]);
-
-  // ================= BUFFERS =================
+  // ─── BUFFERS ─────────────────────────────────────────────
   const updateBufferCircles = (m: maplibregl.Map, lng: number, lat: number) => {
     bufferRings.forEach(ring => {
       const id = `buf-src-${ring.radius}`;
-
       if (m.getSource(id)) {
         if (m.getLayer(`buf-fill-${ring.radius}`)) m.removeLayer(`buf-fill-${ring.radius}`);
         if (m.getLayer(`buf-line-${ring.radius}`)) m.removeLayer(`buf-line-${ring.radius}`);
         m.removeSource(id);
       }
-
       if (!ring.enabled) return;
-
-      m.addSource(id, {
-        type: 'geojson',
-        data: makeCircle(lng, lat, ring.radius),
-      });
-
-      m.addLayer({
-        id: `buf-fill-${ring.radius}`,
-        type: 'fill',
-        source: id,
-        paint: {
-          'fill-color': ring.color,
-          'fill-opacity': ring.opacity,
-        },
-      });
-
-      m.addLayer({
-        id: `buf-line-${ring.radius}`,
-        type: 'line',
-        source: id,
-        paint: {
-          'line-color': ring.color,
-          'line-width': 1.5,
-          'line-opacity': 0.7,
-        },
-      });
+      m.addSource(id, { type: 'geojson', data: makeCircle(lng, lat, ring.radius) });
+      m.addLayer({ id: `buf-fill-${ring.radius}`, type: 'fill', source: id, paint: { 'fill-color': ring.color, 'fill-opacity': ring.opacity } });
+      m.addLayer({ id: `buf-line-${ring.radius}`, type: 'line', source: id, paint: { 'line-color': ring.color, 'line-width': 1.5, 'line-opacity': 0.7 } });
     });
   };
+
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!m || !analysisLngLatRef.current) return;
+    updateBufferCircles(m, analysisLngLatRef.current[0], analysisLngLatRef.current[1]);
+  }, [bufferRings]);
 
   return (
     <div className="map-container">
@@ -244,109 +185,41 @@ export function Map() {
   );
 }
 
-
-// ================= LAYERS COMPLETOS =================
-function updateMapPoints(m: maplibregl.Map, places: any[]) {
-
+// ─── RENDER PLACES EN EL MAPA ─────────────────────────────
+function renderPlaces(m: maplibregl.Map, places: any[]) {
   const data: FeatureCollection<Point> = {
     type: 'FeatureCollection',
     features: places.map(p => ({
       type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [p.longitude, p.latitude],
-      },
-      properties: {
-        id: p.id,
-        group: mapToGroup(p),
-      },
+      geometry: { type: 'Point', coordinates: [p.longitude, p.latitude] },
+      properties: { id: p.id, group: p.layer_group ?? mapToGroup(p) },
     })),
   };
 
+  // Si el source ya existe solo actualiza los datos
   if (m.getSource('places')) {
     (m.getSource('places') as any).setData(data);
     return;
   }
 
-  m.addSource('places', {
-    type: 'geojson',
-    data,
-  });
+  // Primera vez: crea source + layers
+  m.addSource('places', { type: 'geojson', data });
 
-  // 🔥 GLOW
-  m.addLayer({
-    id: 'places-glow',
-    type: 'circle',
-    source: 'places',
-    paint: {
-      'circle-radius': 12,
-      'circle-color': [
-        'match',
-        ['get', 'group'],
-        ...Object.entries(GROUP_COLORS).flat(),
-        '#94a3b8',
-      ] as any,
-      'circle-opacity': 0.2,
-      'circle-blur': 0.8,
-    },
-  });
+  const colorExpr = [
+    'match', ['get', 'group'],
+    ...Object.entries(GROUP_COLORS).flat(),
+    '#94a3b8',
+  ] as any;
 
-  // 🔥 BORDE
-  m.addLayer({
-    id: 'places-border',
-    type: 'circle',
-    source: 'places',
-    paint: {
-      'circle-radius': 7,
-      'circle-color': '#ffffff',
-    },
-  });
+  m.addLayer({ id: 'places-glow', type: 'circle', source: 'places', paint: { 'circle-radius': 12, 'circle-color': colorExpr, 'circle-opacity': 0.2, 'circle-blur': 0.8 } });
+  m.addLayer({ id: 'places-border', type: 'circle', source: 'places', paint: { 'circle-radius': 7, 'circle-color': '#ffffff' } });
+  m.addLayer({ id: 'places-layer', type: 'circle', source: 'places', paint: { 'circle-radius': 4.5, 'circle-color': colorExpr } });
 
-  // 🔥 PUNTO
-  m.addLayer({
-    id: 'places-layer',
-    type: 'circle',
-    source: 'places',
-    paint: {
-      'circle-radius': 4.5,
-      'circle-color': [
-        'match',
-        ['get', 'group'],
-        ...Object.entries(GROUP_COLORS).flat(),
-        '#94a3b8',
-      ] as any,
-    },
-  });
+  m.addLayer({ id: 'places-selected-outer', type: 'circle', source: 'places', filter: ['==', ['get', 'id'], ''], paint: { 'circle-radius': 14, 'circle-color': '#ffffff', 'circle-opacity': 0.9 } });
+  m.addLayer({ id: 'places-selected-inner', type: 'circle', source: 'places', filter: ['==', ['get', 'id'], ''], paint: { 'circle-radius': 7, 'circle-color': colorExpr } });
 
-  // 🔥 SELECCIÓN
-  m.addLayer({
-    id: 'places-selected-outer',
-    type: 'circle',
-    source: 'places',
-    filter: ['==', ['get', 'id'], ''],
-    paint: {
-      'circle-radius': 14,
-      'circle-color': '#ffffff',
-      'circle-opacity': 0.9,
-    },
-  });
-
-  m.addLayer({
-    id: 'places-selected-inner',
-    type: 'circle',
-    source: 'places',
-    filter: ['==', ['get', 'id'], ''],
-    paint: {
-      'circle-radius': 7,
-      'circle-color': [
-        'match',
-        ['get', 'group'],
-        ...Object.entries(GROUP_COLORS).flat(),
-        '#94a3b8',
-      ] as any,
-    },
-  });
-
+  m.on('mouseenter', 'places-layer', () => { m.getCanvas().style.cursor = 'pointer'; });
+  m.on('mouseleave', 'places-layer', () => { m.getCanvas().style.cursor = ''; });
   m.on('click', 'places-layer', (e) => {
     const id = e.features?.[0]?.properties?.id;
     if (id) console.log('Selected:', id);

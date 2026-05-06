@@ -1,7 +1,7 @@
 import type { Place, ScoreData, SettlementType } from '../types';
 import { generateMockScore } from '../data/mockPlaces';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.0.2.58:5001';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const USE_MOCK = false;
 
 // ─── Overpass query ampliada ───────────────────────────────────────────────
@@ -101,7 +101,7 @@ export async function fetchGlobalScore(
   }
 
   const url =
-    `${API_BASE_URL}/api/global_score` +
+    `${API_BASE_URL}/global_score` +
     `?lat=${lat}&lng=${lng}&radius=${radius}&type=${settlementType}`;
 
   const response = await fetch(url);
